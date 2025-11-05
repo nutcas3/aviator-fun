@@ -61,4 +61,29 @@ watch:
             fi; \
         fi
 
-.PHONY: all build run test clean watch docker-run docker-down itest
+# Database Migrations
+migrate-up:
+	@echo "Running migrations..."
+	@go run cmd/migrate/main.go up
+
+migrate-down:
+	@echo "Rolling back migration..."
+	@go run cmd/migrate/main.go down
+
+migrate-version:
+	@echo "Checking migration version..."
+	@go run cmd/migrate/main.go version
+
+migrate-create:
+	@if [ -z "$(name)" ]; then \
+		echo "Error: name is required. Usage: make migrate-create name=your_migration_name"; \
+		exit 1; \
+	fi
+	@echo "Creating migration: $(name)"
+	@go run cmd/migrate/main.go create $(name)
+
+# Database helpers
+db-reset: migrate-down migrate-up
+	@echo "Database reset complete"
+
+.PHONY: all build run test clean watch docker-run docker-down itest migrate-up migrate-down migrate-version migrate-create db-reset
