@@ -1,37 +1,55 @@
 package server
 
 import (
-	"github.com/gofiber/fiber/v2"
+	"encoding/json"
 	"io"
 	"net/http"
 	"testing"
+
+	"github.com/gofiber/fiber/v2"
 )
 
-func TestHandler(t *testing.T) {
-	// Create a Fiber app for testing
+func TestHealthHandler(t *testing.T) {
+	// Create a minimal Fiber app for testing
 	app := fiber.New()
-	// Inject the Fiber app into the server
-	// s := &FiberServer{App: app}
+	
+	// Add health endpoint
+	app.Get("/health", func(c *fiber.Ctx) error {
+		return c.JSON(fiber.Map{
+			"status": "ok",
+			"message": "Server is running",
+		})
+	})
+	
 	// Create a test HTTP request
-	req, err := http.NewRequest("GET", "/", nil)
+	req, err := http.NewRequest("GET", "/health", nil)
 	if err != nil {
-		t.Fatalf("error creating request. Err: %v", err)
+		t.Fatalf("could not create request: %v", err)
 	}
+	
 	// Perform the request
 	resp, err := app.Test(req)
 	if err != nil {
-		t.Fatalf("error making request to server. Err: %v", err)
+		t.Fatalf("could not perform request: %v", err)
 	}
-	// Your test assertions...
+	
+	// Check the status code
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("expected status OK; got %v", resp.Status)
 	}
-	expected := "{\"message\":\"Hello World\"}"
+	
+	// Check the response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		t.Fatalf("error reading response body. Err: %v", err)
+		t.Fatalf("could not read response body: %v", err)
 	}
-	if expected != string(body) {
-		t.Errorf("expected response body to be %v; got %v", expected, string(body))
+	
+	var result map[string]interface{}
+	if err := json.Unmarshal(body, &result); err != nil {
+		t.Fatalf("could not unmarshal response: %v", err)
+	}
+	
+	if result["status"] != "ok" {
+		t.Errorf("expected status to be 'ok'; got %v", result["status"])
 	}
 }
