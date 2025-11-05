@@ -30,11 +30,17 @@ docker-down:
 		docker-compose down; \
 	fi
 
-# Test the application
+# Test the application (skip integration tests)
 test:
 	@echo "Testing..."
+	@SKIP_INTEGRATION=1 go test ./... -v
+
+# Run all tests including integration tests
+test-all:
+	@echo "Running all tests (including integration)..."
 	@go test ./... -v
-# Integrations Tests for the application
+
+# Integration Tests for the application
 itest:
 	@echo "Running integration tests..."
 	@go test ./internal/database -v
@@ -86,4 +92,4 @@ migrate-create:
 db-reset: migrate-down migrate-up
 	@echo "Database reset complete"
 
-.PHONY: all build run test clean watch docker-run docker-down itest migrate-up migrate-down migrate-version migrate-create db-reset
+.PHONY: all build run test test-all clean watch docker-run docker-down itest migrate-up migrate-down migrate-version migrate-create db-reset
