@@ -48,10 +48,25 @@ func New() Service {
 	if err != nil {
 		log.Fatal(err)
 	}
+	
+	// Run migrations
+	migrationsPath := getEnv("MIGRATIONS_PATH", "./migrations")
+	if err := RunMigrations(db, migrationsPath); err != nil {
+		log.Printf("[DB] Migration warning: %v", err)
+		// Don't fail on migration errors in case they're already applied
+	}
+	
 	dbInstance = &service{
 		db: db,
 	}
 	return dbInstance
+}
+
+func getEnv(key, defaultVal string) string {
+	if val := os.Getenv(key); val != "" {
+		return val
+	}
+	return defaultVal
 }
 
 // Health checks the health of the database connection by pinging the database.
