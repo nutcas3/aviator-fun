@@ -1,8 +1,17 @@
 package server
 
-// RegisterGameRoutes registers routes for all game types
+
 func (s *FiberServer) RegisterGameRoutes() {
 	api := s.App.Group("/api/v1")
+
+	// Aviator game routes
+	api.Get("/game/state", s.getGameStateHandler)
+	api.Post("/game/bet", s.placeBetHandler)
+	api.Post("/game/cashout", s.cashoutHandler)
+
+	// User balance routes
+	api.Get("/user/:userId/balance", s.getUserBalanceHandler)
+	api.Post("/user/:userId/balance", s.setUserBalanceHandler)
 
 	// Mines game routes
 	mines := api.Group("/mines")
@@ -17,5 +26,4 @@ func (s *FiberServer) RegisterGameRoutes() {
 	// Dice game routes
 	dice := api.Group("/dice")
 	dice.Post("/roll", s.diceRollHandler)
-	
 }
