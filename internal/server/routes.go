@@ -11,25 +11,13 @@ func (s *FiberServer) RegisterFiberRoutes() {
 		AllowOrigins:     "*",
 		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS,PATCH",
 		AllowHeaders:     "Accept,Authorization,Content-Type",
-		AllowCredentials: false, // credentials require explicit origins
+		AllowCredentials: false,
 		MaxAge:           300,
 	}))
 
-	// Basic routes
 	s.App.Get("/health", s.healthHandler)
 
-	// Aviator game routes
-	api := s.App.Group("/api/v1")
-
-	api.Get("/game/state", s.getGameStateHandler)
-	api.Post("/game/bet", s.placeBetHandler)
-	api.Post("/game/cashout", s.cashoutHandler)
-	api.Get("/user/:userId/balance", s.getUserBalanceHandler)
-	api.Post("/user/:userId/balance", s.setUserBalanceHandler)
-
-	// Register new game routes (Mines, Plinko, Dice)
 	s.RegisterGameRoutes()
 
-	// WebSocket route
 	s.App.Get("/ws", websocket.New(s.gameWebSocketHandler))
 }
