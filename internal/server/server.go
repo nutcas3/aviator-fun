@@ -20,6 +20,7 @@ type FiberServer struct {
 	cache       cache.Service
 	gameManager *game.Manager
 	gameHub     *game.Hub
+	gameFactory *game.GameFactory
 }
 
 func New() *FiberServer {
@@ -36,6 +37,18 @@ func New() *FiberServer {
 	hub := game.NewHub()
 	manager := game.NewManager(hub, redisService.GetClient())
 
+	// Initialize game factory and register all game engines
+	factory := game.NewGameFactory(redisService.GetClient(), hub)
+	
+	// Register game engines
+	minesEngine := game.NewMinesEngine(redisService.GetClient(), hub)
+	plinkoEngine := game.NewPlinkoEngine(redisService.GetClient(), hub)
+	diceEngine := game.NewDiceEngine(redisService.GetClient(), hub)
+	
+	factory.RegisterEngine(minesEngine)
+	factory.RegisterEngine(plinkoEngine)
+	factory.RegisterEngine(diceEngine)
+
 	server := &FiberServer{
 		App: fiber.New(fiber.Config{
 			ServerHeader:  "aviator",
@@ -50,6 +63,7 @@ func New() *FiberServer {
 		cache:       redisService,
 		gameManager: manager,
 		gameHub:     hub,
+		gameFactory: factory,
 	}
 
 	// Apply global middleware
@@ -62,8 +76,13 @@ func New() *FiberServer {
 	// Start game components
 	go hub.Run()
 	go manager.Start()
+	
+	// Start all game engines
+	if err := factory.StartAll(); err != nil {
+		log.Printf("[SERVER] Failed to start game engines: %v", err)
+	}
 
-	log.Println("[SERVER] Game manager started")
+	log.Println("[SERVER] Game manager and all game engines started")
 
 	return server
 }
@@ -75,6 +94,13 @@ func (s *FiberServer) Shutdown() error {
 	// Stop game manager
 	if s.gameManager != nil {
 		s.gameManager.Stop()
+	}
+
+	// Stop all game engines
+	if s.gameFactory != nil {
+		if err := s.gameFactory.StopAll(); err != nil {
+			log.Printf("[SERVER] Error stopping game engines: %v", err)
+		}
 	}
 
 	// Close connections
