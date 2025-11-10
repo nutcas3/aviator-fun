@@ -27,7 +27,6 @@ func (s *FiberServer) RegisterFiberRoutes() {
 	// Basic routes
 	s.App.Get("/health", s.healthHandler)
 
-	// Game routes
 	api := s.App.Group("/api/v1")
 	
 	api.Get("/game/state", s.getGameStateHandler)
@@ -36,7 +35,9 @@ func (s *FiberServer) RegisterFiberRoutes() {
 	api.Get("/user/:userId/balance", s.getUserBalanceHandler)
 	api.Post("/user/:userId/balance", s.setUserBalanceHandler)
 
-	// WebSocket route
+	s.RegisterGameRoutes()
+
+
 	s.App.Get("/ws", websocket.New(s.gameWebSocketHandler))
 
 }
